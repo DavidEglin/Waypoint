@@ -1,0 +1,1040 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<title>Waypoint Study Folder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root {
+    --bg: #eef2ee;
+    --surface: #ffffff;
+    --surface-sunken: #e4e9e3;
+    --ink: #17241d;
+    --ink-soft: #46564c;
+    --ink-faint: #74857a;
+    --line: #cdd6c9;
+    --accent: #2f6b53;
+    --accent-ink: #ffffff;
+    --accent-soft: #e2ede6;
+    --ochre: #a86a2a;
+    --ochre-soft: #f3e6d3;
+    --shadow: 0 1px 2px rgba(23, 36, 29, 0.06), 0 6px 20px -8px rgba(23, 36, 29, 0.18);
+    --focus: #2f6b53;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131b16;
+      --surface: #1b261e;
+      --surface-sunken: #202d23;
+      --ink: #e9efe7;
+      --ink-soft: #b4c2b7;
+      --ink-faint: #7e8f83;
+      --line: #2d3c30;
+      --accent: #6fbb9a;
+      --accent-ink: #0e1a13;
+      --accent-soft: #223229;
+      --ochre: #d9a05e;
+      --ochre-soft: #2c2416;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+      --focus: #6fbb9a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131b16;
+    --surface: #1b261e;
+    --surface-sunken: #202d23;
+    --ink: #e9efe7;
+    --ink-soft: #b4c2b7;
+    --ink-faint: #7e8f83;
+    --line: #2d3c30;
+    --accent: #6fbb9a;
+    --accent-ink: #0e1a13;
+    --accent-soft: #223229;
+    --ochre: #d9a05e;
+    --ochre-soft: #2c2416;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+    --focus: #6fbb9a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-soft); }
+  a { color: inherit; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .shell {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: clamp(20px, 5vw, 40px) 20px 80px;
+  }
+
+  /* ---- top bar ---- */
+  .appbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: 'Spectral', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+  }
+  .brand-mark {
+    width: 22px; height: 22px;
+    flex: none;
+  }
+  .crumbs {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+  .crumbs .current { color: var(--ink-soft); }
+
+  /* ---- assessment header ---- */
+  .a-head {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  .a-kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .a-title {
+    font-family: 'Spectral', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.6rem;
+    line-height: 1.2;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .a-sub {
+    margin: 0 0 16px;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+  }
+  .a-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .parts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 0;
+  }
+  .part {
+    flex: 1 1 200px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .part-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .part-when {
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .rubric-row {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .ai-row {
+    margin-top: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--ochre-soft);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .ai-row svg {
+    flex: none;
+    width: 16px; height: 16px;
+    margin-top: 1px;
+    color: var(--ochre);
+  }
+  .ai-row strong { color: var(--ink); }
+  .rubric-label {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    margin-right: 4px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.74rem;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: var(--surface-sunken);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+
+  /* ---- section (topic group) ---- */
+  .topic {
+    margin-bottom: 26px;
+  }
+  .topic-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+  .topic-name {
+    font-family: 'Spectral', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+  }
+  .topic-week {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .items { display: flex; flex-direction: column; gap: 8px; }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    padding: 13px 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .item-icon {
+    flex: none;
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .item-icon svg { width: 17px; height: 17px; }
+  .item-body { flex: 1; min-width: 0; }
+  .item-title {
+    font-weight: 500;
+    font-size: 0.93rem;
+    margin: 0 0 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .item-meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .dot::before { content: "·"; margin-right: 6px; color: var(--line); }
+  .caption-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .caption-tag svg { width: 11px; height: 11px; }
+
+  .notif-icon {
+    background: var(--ochre-soft);
+    color: var(--ochre);
+  }
+
+  .chev {
+    flex: none;
+    width: 16px; height: 16px;
+    color: var(--ink-faint);
+    transition: transform 0.15s ease;
+  }
+  .item[data-open="true"] .chev { transform: rotate(90deg); }
+
+  .item-detail {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.22s ease;
+  }
+  .item[data-open="true"] .item-detail { grid-template-rows: 1fr; }
+  .item-detail-inner { overflow: hidden; }
+  .item-detail-content {
+    padding: 0 15px 16px 62px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .item-detail-content .why {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    margin-bottom: 5px;
+  }
+  mark {
+    background: var(--ochre-soft);
+    color: var(--ink);
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+
+  /* ---- footer / export ---- */
+  .footer {
+    margin-top: 34px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .footer-text h3 {
+    margin: 0 0 3px;
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 1.02rem;
+    font-weight: 600;
+  }
+  .footer-text p { margin: 0; font-size: 0.83rem; color: var(--ink-soft); }
+  .btn {
+    flex: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    padding: 11px 18px;
+    border-radius: 9px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .btn svg { width: 15px; height: 15px; }
+  .btn:active { transform: translateY(1px); }
+
+  /* ---- upload / confirm / searching stages ---- */
+  .stage-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 30px 24px;
+    text-align: center;
+  }
+  .stage-kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+  .stage-title {
+    font-family: 'Spectral', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  .stage-sub {
+    margin: 0 auto 22px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    max-width: 42ch;
+  }
+
+  .dropzone {
+    border: 1.5px dashed var(--line);
+    border-radius: 12px;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-sunken);
+  }
+  .doc-icon { width: 52px; height: 64px; flex: none; }
+  .doc-icon svg { width: 100%; height: 100%; color: var(--ochre); }
+  .dropzone-text { font-size: 0.85rem; color: var(--ink-faint); margin: 0; }
+
+  .upload-actions, .confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    box-shadow: none;
+  }
+  .btn[disabled] { opacity: 0.75; cursor: default; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: var(--accent-ink);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex: none;
+    display: inline-block;
+    vertical-align: -3px;
+    margin-right: 7px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.6s; } }
+
+  .searching-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 30px 20px;
+  }
+  .searching-panel .spinner {
+    width: 26px; height: 26px;
+    border-width: 3px;
+    border-color: var(--accent-soft);
+    border-top-color: var(--accent);
+    margin: 0;
+  }
+  .searching-panel p { margin: 0; font-size: 0.92rem; color: var(--ink-soft); }
+  .searching-panel .sub { font-size: 0.78rem; color: var(--ink-faint); }
+
+  .confirm-card { text-align: left; }
+  .confirm-card .stage-sub { margin-left: 0; }
+  .confirm-photo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .confirm-photo .doc-icon { width: 32px; height: 40px; }
+  .confirm-photo-meta { font-size: 0.82rem; }
+  .confirm-photo-meta .name { font-weight: 500; }
+  .confirm-photo-meta .info { color: var(--ink-faint); }
+
+  .confirm-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .confirm-field:last-of-type { border-bottom: none; }
+  .cf-label {
+    flex: none;
+    width: 108px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    padding-top: 3px;
+  }
+  .cf-value {
+    flex: 1;
+    font-size: 0.88rem;
+    border-radius: 6px;
+    padding: 3px 6px;
+    margin: -3px -6px;
+  }
+  .cf-value[contenteditable="true"]:hover,
+  .cf-value[contenteditable="true"]:focus {
+    background: var(--accent-soft);
+    outline: none;
+  }
+  .cf-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .confirm-hint {
+    margin: 16px 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+  }
+  .confirm-hint svg { width: 12px; height: 12px; vertical-align: -1px; margin-right: 3px; color: var(--accent); }
+
+  .new-notif-btn {
+    font-size: inherit;
+    font-family: inherit;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .not-matched-note {
+    margin-top: 18px;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    padding-left: 2px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 12px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 11px 18px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 440px) {
+    .a-title { font-size: 1.35rem; }
+    .item-detail-content { padding-left: 15px; }
+  }
+</style>
+
+<div class="shell">
+
+  <div class="appbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C7 6.5 4 10.8 4 14.5C4 18.6 7.6 22 12 22C16.4 22 20 18.6 20 14.5C20 10.8 17 6.5 12 2Z" stroke="var(--accent)" stroke-width="1.6"/>
+        <path d="M8.5 13.5C9.5 12 10.5 15 12 13.5C13.5 12 14 15.5 15.5 14" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Waypoint
+    </div>
+    <div class="crumbs">GEOG201 / Midterm Exam / <span class="current" id="crumbCurrent">New notification</span> <button class="new-notif-btn" id="startOverBtn">· start over</button></div>
+  </div>
+
+  <div id="panelUpload" class="stage-card">
+    <p class="stage-kicker">Step 1 of 3</p>
+    <h1 class="stage-title">Add an assessment notification</h1>
+    <p class="stage-sub">Snap a photo of the notification, or upload the PDF/Word doc if your teacher posted one — Waypoint reads either and finds what you need to study.</p>
+    <div class="dropzone">
+      <div class="doc-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <p class="dropzone-text">No file chosen yet</p>
+    </div>
+    <div class="upload-actions">
+      <button class="btn" id="useSamplePhotoBtn" data-source="photo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.5a1 1 0 0 1 .86-.5h6.08a1 1 0 0 1 .86.5L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+        Use sample photo
+      </button>
+      <button class="btn btn-secondary" id="useSampleDocBtn" data-source="doc">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 13h8M8 16.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Use sample document
+      </button>
+    </div>
+  </div>
+
+  <div id="panelConfirm" class="stage-card confirm-card" hidden>
+    <p class="stage-kicker">Step 2 of 3</p>
+    <h1 class="stage-title">Does this look right?</h1>
+    <p class="stage-sub">Here's what Waypoint read off your photo. Tap anything to fix it before we start searching.</p>
+
+    <div class="confirm-photo">
+      <div class="doc-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="confirm-photo-meta">
+        <div class="name" id="confirmFileName">notification_photo.jpg</div>
+        <div class="info" id="confirmFileInfo">Read in 2.1s using photo scan (OCR)</div>
+      </div>
+    </div>
+
+    <div class="confirm-field">
+      <span class="cf-label">Assessment</span>
+      <span class="cf-value" contenteditable="true">Weather, People &amp; Place — Midterm Exam</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">Course</span>
+      <span class="cf-value" contenteditable="true">GEOG201</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">Part A due</span>
+      <span class="cf-value" contenteditable="true">Wed 23 Sep — research notes, no word limit</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">Part B due</span>
+      <span class="cf-value" contenteditable="true">Fri 25 Sep — in-class, 40 min writing time</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">Weighting</span>
+      <span class="cf-value" contenteditable="true">30% of course grade</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">AI use</span>
+      <span class="cf-value" contenteditable="true">Idea generation only, before Part A — none during Part B</span>
+    </div>
+    <div class="confirm-field">
+      <span class="cf-label">Topics found</span>
+      <span class="cf-value cf-chips">
+        <span class="chip">atmospheric circulation</span>
+        <span class="chip">urban growth</span>
+        <span class="chip">land degradation</span>
+        <span class="chip">+ 5 more</span>
+      </span>
+    </div>
+
+    <p class="confirm-hint">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15.5" r="0.9" fill="currentColor"/></svg>
+      Fields are editable — click any value to correct it.
+    </p>
+
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" id="backToUploadBtn">Choose a different file</button>
+      <button class="btn" id="confirmStartBtn">Looks right — start searching</button>
+    </div>
+  </div>
+
+  <div id="panelSearching" class="stage-card" hidden>
+    <div class="searching-panel">
+      <div class="spinner"></div>
+      <p>Searching GEOG201 for matching content…</p>
+      <p class="sub">Checking pages, slides, readings and captioned videos</p>
+    </div>
+  </div>
+
+  <div id="panelFolder" hidden>
+  <div class="a-head">
+    <p class="a-kicker">Study folder · auto-built</p>
+    <h1 class="a-title">Weather, People &amp; Place — Midterm Exam</h1>
+    <p class="a-sub">GEOG201 Human &amp; Physical Geography · covers Weeks 3–9</p>
+
+    <div class="parts-row">
+      <div class="part">
+        <span class="part-label">Part A · Research notes</span>
+        <span class="part-when">Due Wed 23 Sep · no word limit</span>
+      </div>
+      <div class="part">
+        <span class="part-label">Part B · In-class test</span>
+        <span class="part-when">Fri 25 Sep · 40 min writing time</span>
+      </div>
+    </div>
+
+    <div class="a-stats">
+      <div class="stat">
+        <span class="stat-num">8</span>
+        <span class="stat-label">items matched</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">3</span>
+        <span class="stat-label">topics</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">1</span>
+        <span class="stat-label">left out (no captions)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">30%</span>
+        <span class="stat-label">of course grade</span>
+      </div>
+    </div>
+
+    <div class="rubric-row">
+      <span class="rubric-label">Matched from the rubric on:</span>
+      <span class="chip">atmospheric circulation</span>
+      <span class="chip">urban growth</span>
+      <span class="chip">land degradation</span>
+      <span class="chip">+ 5 more</span>
+    </div>
+
+    <div class="ai-row">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15.5" r="0.9" fill="currentColor"/></svg>
+      <span><strong>AI use for this task:</strong> idea generation and brainstorming only, before Part A is submitted · not permitted at all during Part B (in-class)</span>
+    </div>
+  </div>
+
+  <!-- Assessment notification (always included) -->
+  <div class="topic">
+    <div class="topic-head">
+      <span class="topic-name">Assessment Notification</span>
+      <span class="topic-week">OFFICIAL DOCUMENT</span>
+    </div>
+    <div class="items">
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon notif-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">GEOG201 Midterm — Assessment Notification</span>
+            <span class="item-meta">Whole task <span class="dot"></span>Official PDF <span class="dot"></span>from Canvas</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>The real notification, always kept in the folder as-is — the due dates, weighting and AI-use rules above were pulled straight from this document, so you can check the exact wording yourself any time.</p>
+        </div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Topic 1 -->
+  <div class="topic">
+    <div class="topic-head">
+      <span class="topic-name">Weather &amp; Climate Systems</span>
+      <span class="topic-week">WEEKS 3–4</span>
+    </div>
+    <div class="items">
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Global Atmospheric Circulation — lecture slides</span>
+            <span class="item-meta">Week 3 <span class="dot"></span>Lecture slides <span class="dot"></span>PPTX</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Slide text mentions <mark>atmospheric circulation</mark>, Hadley cells, and pressure belts — matches the rubric's "explain global circulation patterns" criterion.</p>
+        </div></div></div>
+      </div>
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 13h8M8 16.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Köppen Climate Classification — reading</span>
+            <span class="item-meta">Week 3 <span class="dot"></span>Reading <span class="dot"></span>PDF</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Covers <mark>climate classification</mark> systems and biome boundaries, directly named in the exam's Section B criteria.</p>
+        </div></div></div>
+      </div>
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M10 8l6 4-6 4V8z" fill="currentColor"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">El Niño Explained — recorded lecture</span>
+            <span class="item-meta">Week 4 <span class="dot"></span>Video <span class="caption-tag"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M6 12h2M10 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>captioned</span></span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Captions mention <mark>ENSO</mark> and ocean-atmosphere feedback — matched even though it's a video, because captions were available to search.</p>
+        </div></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Topic 2 -->
+  <div class="topic">
+    <div class="topic-head">
+      <span class="topic-name">Population &amp; Urbanisation</span>
+      <span class="topic-week">WEEKS 6–7</span>
+    </div>
+    <div class="items">
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Urban Growth Models — lecture notes</span>
+            <span class="item-meta">Week 6 <span class="dot"></span>Notes <span class="dot"></span>DOCX</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Covers the Burgess and Hoyt models of <mark>urban growth</mark> — matches the rubric's "apply an urban model to a real city" criterion.</p>
+        </div></div></div>
+      </div>
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 13h8M8 16.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Case Study: Megacities of Asia — reading</span>
+            <span class="item-meta">Week 6 <span class="dot"></span>Reading <span class="dot"></span>PDF</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Uses Jakarta and Manila as worked examples of <mark>rapid urbanisation</mark> — a ready-made case study for the exam's short-answer section.</p>
+        </div></div></div>
+      </div>
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Demographic Transition Model — slides</span>
+            <span class="item-meta">Week 7 <span class="dot"></span>Lecture slides <span class="dot"></span>PPTX</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Diagrams the 5-stage <mark>demographic transition</mark> — named directly in the marking criteria for Section C.</p>
+        </div></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Topic 3 -->
+  <div class="topic">
+    <div class="topic-head">
+      <span class="topic-name">Human–Environment Interaction</span>
+      <span class="topic-week">WEEK 9</span>
+    </div>
+    <div class="items">
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.6"/><path d="M8 13h8M8 16.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Sustainable Land Use — case study</span>
+            <span class="item-meta">Week 9 <span class="dot"></span>Case study <span class="dot"></span>PDF</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Discusses <mark>sustainable land use</mark> trade-offs in the Murray-Darling Basin — matches the rubric's environmental-management criterion.</p>
+        </div></div></div>
+      </div>
+
+      <div class="item" data-open="false">
+        <button class="item-row" data-toggle>
+          <span class="item-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M10 8l6 4-6 4V8z" fill="currentColor"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+          </span>
+          <span class="item-body">
+            <span class="item-title">Deforestation &amp; Land Degradation — recorded lecture</span>
+            <span class="item-meta">Week 9 <span class="dot"></span>Video <span class="caption-tag"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M6 12h2M10 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>captioned</span></span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="item-detail"><div class="item-detail-inner"><div class="item-detail-content">
+          <p class="why">Why this is here</p>
+          <p>Captions cover <mark>land degradation</mark> drivers in the Amazon and Sahel — pulled in from the caption text, not the video title.</p>
+        </div></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="not-matched-note">1 item left out of matching: <em>Field Trip Debrief — recording (no captions available)</em>. Still viewable in the course, just not auto-matched yet.</p>
+
+  <div class="footer">
+    <div class="footer-text">
+      <h3>Study however suits you</h3>
+      <p>Export this folder's content as text, ready to drop into NotebookLM or similar for an audio version.</p>
+    </div>
+    <button class="btn" id="exportBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Export folder
+    </button>
+  </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast">Exported 8 items as text — ready for NotebookLM</div>
+
+<script>
+  document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var item = btn.closest('.item');
+      var open = item.getAttribute('data-open') === 'true';
+      item.setAttribute('data-open', open ? 'false' : 'true');
+    });
+  });
+
+  var toast = document.getElementById('toast');
+  var toastTimer;
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+  });
+
+  // ---- upload → confirm → searching → folder flow ----
+  var stagePanels = ['panelUpload', 'panelConfirm', 'panelSearching', 'panelFolder'];
+  var crumbLabels = {
+    panelUpload: 'New notification',
+    panelConfirm: 'Confirm details',
+    panelSearching: 'Searching…',
+    panelFolder: 'Study folder'
+  };
+  function showStage(id) {
+    stagePanels.forEach(function (p) {
+      var el = document.getElementById(p);
+      if (el) el.hidden = (p !== id);
+    });
+    var crumb = document.getElementById('crumbCurrent');
+    if (crumb) crumb.textContent = crumbLabels[id] || '';
+  }
+
+  var sourceButtons = [document.getElementById('useSamplePhotoBtn'), document.getElementById('useSampleDocBtn')];
+  var sourceDefaults = sourceButtons.map(function (b) { return b ? b.innerHTML : ''; });
+  function resetSourceButtons() {
+    sourceButtons.forEach(function (b, i) {
+      if (!b) return;
+      b.disabled = false;
+      b.innerHTML = sourceDefaults[i];
+    });
+  }
+  var sourceInfo = {
+    photo: {
+      label: 'Reading photo…',
+      fileName: 'notification_photo.jpg',
+      fileInfo: 'Read in 2.1s using photo scan (OCR)'
+    },
+    doc: {
+      label: 'Reading document…',
+      fileName: 'GEOG201_midterm_notification.pdf',
+      fileInfo: 'Read in 0.6s — text pulled directly from the file'
+    }
+  };
+  sourceButtons.forEach(function (btn) {
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var source = btn.getAttribute('data-source');
+      var info = sourceInfo[source];
+      sourceButtons.forEach(function (b) { if (b) b.disabled = true; });
+      btn.innerHTML = '<span class="spinner"></span>' + info.label;
+      setTimeout(function () {
+        var nameEl = document.getElementById('confirmFileName');
+        var infoEl = document.getElementById('confirmFileInfo');
+        if (nameEl) nameEl.textContent = info.fileName;
+        if (infoEl) infoEl.textContent = info.fileInfo;
+        showStage('panelConfirm');
+      }, source === 'doc' ? 500 : 900);
+    });
+  });
+
+  var backToUploadBtn = document.getElementById('backToUploadBtn');
+  if (backToUploadBtn) {
+    backToUploadBtn.addEventListener('click', function () {
+      resetSourceButtons();
+      showStage('panelUpload');
+    });
+  }
+
+  var confirmStartBtn = document.getElementById('confirmStartBtn');
+  if (confirmStartBtn) {
+    confirmStartBtn.addEventListener('click', function () {
+      showStage('panelSearching');
+      setTimeout(function () { showStage('panelFolder'); }, 1100);
+    });
+  }
+
+  var startOverBtn = document.getElementById('startOverBtn');
+  if (startOverBtn) {
+    startOverBtn.addEventListener('click', function () {
+      resetSourceButtons();
+      showStage('panelUpload');
+    });
+  }
+
+  showStage('panelUpload');
+</script>
+
+</body></html>

@@ -1,0 +1,76 @@
+/* Night Study design tokens (brief section 9). Light is the :root default; dark applies when
+   data-theme="dark", or when no theme is forced and the device prefers dark ("Match device"). */
+:root {
+  --bg: #f6f3ec;
+  --surface: #fffdf8;
+  --surface-sunken: #ece7da;
+  --ink: #1c1a15;
+  --ink-soft: #4b4a44;
+  --ink-faint: #66645c;
+  --line: #ddd6c4;
+  --accent: #8a5a0f;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e7c8;
+  --accent-border: #e0c88f;
+  --notice: #1f6a80;
+  --notice-soft: #e0f1f6;
+  --notice-border: #a8d5e2;
+  --highlight: #f3d98f;
+  --dashed: #b9b09a;
+  /* Additions for error states (the brief has no error colour yet). */
+  --danger: #a3261f;
+  --danger-soft: #fbe6e3;
+  --danger-border: #e4aaa4;
+  --shadow: 0 1px 2px rgba(28, 26, 21, 0.06), 0 8px 24px -10px rgba(28, 26, 21, 0.18);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f131b;
+    --surface: #171d28;
+    --surface-sunken: #1e2531;
+    --ink: #efece3;
+    --ink-soft: #bcc0cb;
+    --ink-faint: #939aaa;
+    --line: #2b3444;
+    --accent: #e8b45f;
+    --accent-ink: #1b1406;
+    --accent-soft: #2b2416;
+    --accent-border: #5a4826;
+    --notice: #8fd0e4;
+    --notice-soft: #14303a;
+    --notice-border: #245566;
+    --highlight: #5a4826;
+    --dashed: #4a5568;
+    --danger: #ff9e94;
+    --danger-soft: #3a1c1c;
+    --danger-border: #6b3a36;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f131b;
+  --surface: #171d28;
+  --surface-sunken: #1e2531;
+  --ink: #efece3;
+  --ink-soft: #bcc0cb;
+  --ink-faint: #939aaa;
+  --line: #2b3444;
+  --accent: #e8b45f;
+  --accent-ink: #1b1406;
+  --accent-soft: #2b2416;
+  --accent-border: #5a4826;
+  --notice: #8fd0e4;
+  --notice-soft: #14303a;
+  --notice-border: #245566;
+  --highlight: #5a4826;
+  --dashed: #4a5568;
+  --danger: #ff9e94;
+  --danger-soft: #3a1c1c;
+  --danger-border: #6b3a36;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
