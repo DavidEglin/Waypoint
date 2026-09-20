@@ -1,0 +1,64 @@
+# Waypoint. Run with:  docker compose up -d --build
+#
+# Before the first start:
+#   1. Create ./data owned by the container's user:   mkdir -p data && sudo chown 1000:1000 data
+#   2. Create a .env file next to this one (compose reads it automatically):
+#        ENCRYPTION_KEY=<output of: openssl rand -base64 32>
+#        ADMIN_USERNAME=<your username>
+#        ADMIN_PASSWORD=<a temporary password, 12+ characters>
+#      Keep ENCRYPTION_KEY safe: without it, saved Canvas tokens and Claude keys cannot be read
+#      (you would have to enter them again). The admin login is only used if no admin exists yet,
+#      and you are made to change that password at first sign-in.
+#   3. Point your Cloudflare Tunnel's public hostname at http://localhost:3000
+#      (if cloudflared runs on this machine), or at whatever address reaches this container.
+#
+# Backups are your provider's snapshots: everything worth keeping is in ./data.
+
+services:
+  waypoint:
+    build: .
+    image: waypoint:latest
+    container_name: waypoint
+    restart: unless-stopped
+    init: true
+
+    environment:
+      PORT: "3000"
+      DATA_DIR: /data
+      # The only Host header the app accepts. Anything else is refused.
+      ALLOWED_HOST: waypoint.yaxley.com.au
+      # The browser always sees HTTPS (Cloudflare), so cookies are marked Secure.
+      COOKIE_SECURE: "true"
+      # Read the visitor's real IP from Cloudflare's header for login rate limiting.
+      # Only safe because the port below is bound to localhost, so only the tunnel can reach it.
+      # If you ever publish the port to the network, set this to "false".
+      TRUST_CLOUDFLARE_HEADERS: "true"
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env (openssl rand -base64 32)}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Model used to read notifications, and the time zone dates are read in.
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5}
+      TIMEZONE: ${TIMEZONE:-Australia/Sydney}
+
+    # Localhost only, so the site is reachable only through the tunnel.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    volumes:
+      - ./data:/data
+
+    # The app only writes to /data. A read-only root filesystem and dropped privileges limit the damage
+    # if anything in it were ever compromised.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

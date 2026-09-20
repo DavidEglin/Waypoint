@@ -1,12 +1,18 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
+import fastifyMultipart from '@fastify/multipart';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { MAX_UPLOAD_BYTES } from '@waypoint/shared';
 import { cookieName, lookupSession, purgeExpiredSessions, sendError } from './auth.js';
 import type { Config } from './config.js';
 import type { Db } from './db.js';
+import { JobRunner } from './jobs.js';
+import { readNotification } from './read.js';
 import { adminRoutes } from './routes/admin.js';
+import { assessmentRoutes } from './routes/assessments.js';
+import { courseRoutes } from './routes/courses.js';
 import { connectionRoutes } from './routes/connections.js';
 import { sessionRoutes } from './routes/session.js';
 
@@ -16,8 +22,17 @@ export interface AppDeps {
   /** Injected in tests; defaults to global fetch. */
   fetch?: typeof fetch;
   now?: () => Date;
-  claudeApiBase?: string;
   logger?: boolean;
+  /** Start the background worker. Tests turn this off and call app.jobs.drain() instead. */
+  startJobs?: boolean;
+  /** SDK retries for Claude calls (default 2). Tests use 0 so failures are immediate. */
+  claudeRetries?: number;
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    jobs: JobRunner;
+  }
 }
 
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -35,6 +50,15 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   app.decorateRequest('auth', null);
   app.register(fastifyCookie);
+  app.register(fastifyMultipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1, fields: 5, parts: 6 } });
+
+  const jobs = new JobRunner(db, {
+    read_notification: (p: { assessmentId: number }) =>
+      readNotification({ db, config, fetch: deps.fetch, now, claudeRetries: deps.claudeRetries, log: (m) => app.log.warn(m) }, p.assessmentId),
+  });
+  app.decorate('jobs', jobs);
+  if (deps.startJobs !== false) jobs.start();
+  app.addHook('onClose', async () => jobs.stop());
 
   // 1. Host lock: only the configured public hostname is served.
   app.addHook('onRequest', async (request, reply) => {
@@ -62,8 +86,14 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     if (!STATE_CHANGING.has(request.method) || !request.url.startsWith('/api/')) return;
     const origin = request.headers.origin;
     if (origin && origin !== expectedOrigin) return sendError(reply, 403, 'bad_origin', 'Request blocked.');
+    const type = request.headers['content-type']?.toLowerCase() ?? '';
+    if (type.startsWith('multipart/form-data')) {
+      // A cross-site form can send multipart, so for uploads the Origin must be present and ours.
+      if (origin !== expectedOrigin) return sendError(reply, 403, 'bad_origin', 'Request blocked.');
+      return;
+    }
     const hasBody = request.headers['content-length'] !== undefined && request.headers['content-length'] !== '0';
-    if (hasBody && !request.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+    if (hasBody && !type.startsWith('application/json')) {
       return sendError(reply, 415, 'json_required', 'Requests must be JSON.');
     }
   });
@@ -80,12 +110,15 @@ export function buildApp(deps: AppDeps): FastifyInstance {
       request.log.error({ err: error }, 'unhandled error');
       return sendError(reply, 500, 'server_error', 'Something went wrong on our side.');
     }
+    if (status === 413) return sendError(reply, 413, 'file_too_large', 'That file is too big. The limit is 15 MB.');
     return sendError(reply, status, 'invalid_request', 'That request was not valid.');
   });
 
   sessionRoutes(app, deps);
   adminRoutes(app, deps);
   connectionRoutes(app, deps);
+  courseRoutes(app, deps);
+  assessmentRoutes(app, deps);
   app.get('/api/health', async () => ({ ok: true }));
   app.all('/api/*', async (_request, reply) => sendError(reply, 404, 'not_found', 'Not found.'));
 

@@ -1,0 +1,22 @@
+# Keep the build context small and stop host files leaking into the image.
+# node_modules and dist matter most: the ones on a Mac contain macOS binaries that would break on Linux.
+**/node_modules
+**/dist
+data
+.git
+.gitignore
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.sqlite*
+
+# Not needed to build or run
+Reference
+waypoint-build-brief.md
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+**/*.log

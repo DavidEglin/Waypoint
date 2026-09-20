@@ -1,10 +1,12 @@
-import type { ApiError, ConnectionErrorCode } from '@waypoint/shared';
+import type { ApiError } from '@waypoint/shared';
 
 export class ApiFailure extends Error {
   constructor(
     public status: number,
     public code: string,
     message: string,
+    /** The rest of the error body, for the few errors that carry extra data (e.g. already_added). */
+    public data: Record<string, unknown> = {},
   ) {
     super(message);
   }
@@ -19,8 +21,9 @@ export async function api<T = void>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | '
     res = await fetch(path, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      // FormData sets its own multipart boundary header; everything else is JSON.
+      headers: body === undefined || body instanceof FormData ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiFailure(0, 'network', 'Could not reach Waypoint. Check your connection and try again.');
@@ -34,11 +37,11 @@ export async function api<T = void>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | '
     data = undefined;
   }
   if (!res.ok) {
-    const err = (data ?? {}) as Partial<ApiError>;
+    const err = (data ?? {}) as Partial<ApiError> & Record<string, unknown>;
     if (res.status === 401 && path !== '/api/session' && path !== '/api/me') {
       window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
     }
-    throw new ApiFailure(res.status, err.error ?? 'error', err.message ?? 'Something went wrong. Please try again.');
+    throw new ApiFailure(res.status, err.error ?? 'error', err.message ?? 'Something went wrong. Please try again.', err);
   }
   return data as T;
 }
@@ -46,12 +49,3 @@ export async function api<T = void>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | '
 export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Something went wrong. Please try again.';
 }
-
-export const CONNECTION_ERROR_TEXT: Record<ConnectionErrorCode, string> = {
-  bad_credentials: 'That was rejected. Check the details and try again.',
-  rate_limited: 'Too many requests just now. Wait a minute and try again.',
-  timeout: 'It took too long to answer. Try again in a moment.',
-  unreachable: 'Could not reach it. Check the address and your connection.',
-  bad_response: 'It answered, but not in the way we expected. Check the address.',
-  invalid_address: 'That address does not look right.',
-};

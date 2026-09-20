@@ -11,6 +11,12 @@ export interface Config {
   adminPassword: string | null;
   /** Directory of the built client, served in production. */
   clientDir: string | null;
+  /** Model used to read notifications. A config value, never hard-coded at call sites. */
+  claudeModel: string;
+  /** Override for the Anthropic API base URL (tests and local stubs only). */
+  claudeApiBase: string | null;
+  /** IANA zone the student's dates are read in (brief Q9: one fixed zone for now). */
+  timezone: string;
 }
 
 function bool(value: string | undefined, fallback: boolean): boolean {
@@ -25,6 +31,16 @@ export function parseEncryptionKey(value: string | undefined): Buffer {
     throw new Error(`ENCRYPTION_KEY must decode to exactly 32 bytes (got ${key.length}).`);
   }
   return key;
+}
+
+export function parseTimezone(value: string | undefined): string {
+  const zone = value?.trim() || 'Australia/Sydney';
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: zone });
+  } catch {
+    throw new Error(`TIMEZONE "${zone}" is not a valid IANA time zone (for example Australia/Sydney).`);
+  }
+  return zone;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -45,5 +61,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     adminUsername: env.ADMIN_USERNAME?.trim() || null,
     adminPassword: env.ADMIN_PASSWORD || null,
     clientDir: env.CLIENT_DIR?.trim() || null,
+    claudeModel: env.CLAUDE_MODEL?.trim() || 'claude-opus-5',
+    claudeApiBase: env.CLAUDE_API_BASE?.trim() || null,
+    timezone: parseTimezone(env.TIMEZONE),
   };
 }

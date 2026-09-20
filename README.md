@@ -2,7 +2,9 @@
 
 One study folder per assessment. See `waypoint-build-brief.md` for the plan and decisions.
 
-Status: **M1 (skeleton)**: sign-in, sessions, admin users, encrypted Canvas/Claude connections, Night Study theme, Settings.
+Status: **M2 (add and read)** on top of M1 (skeleton).
+- M1: sign-in, sessions, admin users, encrypted Canvas/Claude connections, Night Study theme, Settings.
+- M2: add a notification from Canvas or by uploading a photo / PDF / Word file; Waypoint reads it with Claude (your own key) into an assessment with parts and due dates, weighting, AI-use rules and topics, and shows it for checking. Editing and confirming (M3) is not built yet.
 
 ## Layout
 - `shared/` API types and validation (zod), used by both sides
@@ -30,5 +32,7 @@ npm run build
 ```
 
 ## Run the build
+Model and time zone are set with `CLAUDE_MODEL` (default `claude-opus-5`) and `TIMEZONE` (default `Australia/Sydney`).
+
 `CLIENT_DIR=client/dist npm start` serves the API and the built client on `PORT`. See `.env.example` for every setting.
 The app only answers to the exact `ALLOWED_HOST` and serves plain HTTP; HTTPS and the tunnel are yours to configure. There is no Docker or deploy script in this repo.

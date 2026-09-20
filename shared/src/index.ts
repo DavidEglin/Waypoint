@@ -96,7 +96,19 @@ export type ConnectionErrorCode =
   | 'timeout'
   | 'unreachable'
   | 'bad_response'
+  | 'unavailable'
   | 'invalid_address';
+
+/** Plain-language text for each connection/read failure, shared so server and client say the same thing. */
+export const CONNECTION_ERROR_TEXT: Record<ConnectionErrorCode, string> = {
+  bad_credentials: 'That was rejected. Check the details and try again.',
+  rate_limited: 'Too many requests just now. Wait a minute and try again.',
+  timeout: 'It took too long to answer. Try again in a moment.',
+  unreachable: 'Could not reach it. Check the address and your connection.',
+  bad_response: 'It answered, but not in the way we expected. Check the address.',
+  unavailable: 'The service is busy or down at the moment. Try again shortly.',
+  invalid_address: 'That address does not look right.',
+};
 
 export interface ConnectionInfo {
   connected: boolean;
@@ -118,3 +130,115 @@ export interface ApiError {
   error: string;
   message: string;
 }
+
+// ---- Courses and assessments (M2) ----
+
+export interface CourseInfo {
+  id: number;
+  canvasCourseId: string;
+  code: string | null;
+  name: string;
+}
+
+/** An upcoming assignment found in Canvas that the student can add. */
+export interface CanvasFoundAssessment {
+  courseId: number;
+  courseName: string;
+  canvasAssignmentId: string;
+  name: string;
+  dueAt: string | null;
+  /** Set when this assignment has already been added. */
+  addedAssessmentId: number | null;
+}
+
+export interface CanvasFoundResponse {
+  courses: CourseInfo[];
+  items: CanvasFoundAssessment[];
+}
+
+export const fromCanvasRequestSchema = z.object({
+  courseId: z.number().int().positive(),
+  canvasAssignmentId: z.string().trim().min(1).max(40).regex(/^\d+$/, 'Not a Canvas assignment id.'),
+});
+export type FromCanvasRequest = z.infer<typeof fromCanvasRequestSchema>;
+
+export type AssessmentStatus = 'reading' | 'needs_check' | 'confirmed' | 'searching' | 'ready' | 'failed';
+export type AssessmentSource = 'canvas' | 'photo' | 'document';
+export type ReadMethod = 'vision' | 'parsed' | 'canvas';
+
+/** Why reading a notification failed. Connection codes are reused where the cause is the same. */
+export type ReadErrorCode =
+  | ConnectionErrorCode
+  | 'no_claude_key'
+  | 'no_canvas'
+  | 'unreadable'
+  | 'no_text'
+  | 'too_long'
+  | 'refused'
+  | 'bad_parse'
+  | 'internal';
+
+export const READ_ERROR_TEXT: Record<ReadErrorCode, string> = {
+  ...CONNECTION_ERROR_TEXT,
+  // When reading, these say what was involved, since the student is not looking at a settings form.
+  bad_credentials: 'Your Claude API key or Canvas token was rejected. Check them in Settings, then try again.',
+  rate_limited: 'Claude or Canvas is limiting requests right now. Wait a minute, then try again.',
+  timeout: 'Claude or Canvas took too long to answer. Try again in a moment.',
+  unreachable: 'Waypoint could not reach Claude or Canvas. Check your connection and try again.',
+  bad_response: 'Claude or Canvas answered in a way Waypoint did not expect. Try again.',
+  unavailable: 'Claude or Canvas is busy or down at the moment. Try again shortly.',
+  no_claude_key: 'Add your Claude API key in Settings, then try again.',
+  no_canvas: 'Connect Canvas in Settings, then try again.',
+  unreadable: 'Waypoint could not open that file. Try a clearer photo, or a different copy of the document.',
+  no_text: 'There was no readable text in that notification. Try a clearer photo or a different file.',
+  too_long: 'That notification is longer than Waypoint can read in one go.',
+  refused: 'Claude declined to read that. Try a different file or a clearer photo.',
+  bad_parse: 'Claude read it, but the answer was not usable. Try again.',
+  internal: 'Something went wrong on our side. Try again.',
+};
+
+export interface AssessmentSummary {
+  id: number;
+  title: string;
+  courseName: string | null;
+  source: AssessmentSource;
+  status: AssessmentStatus;
+  /** Earliest part due date that is still ahead, if any. */
+  nextDueAt: string | null;
+  /** Latest part due date, used to sort and dim past assessments. */
+  lastDueAt: string | null;
+  createdAt: string;
+}
+
+export interface AssessmentPart {
+  label: string;
+  description: string | null;
+  dueAt: string | null;
+  /** False when the notification gave a date but no time of day. */
+  dueHasTime: boolean;
+  /** The notification's own wording for the due date, e.g. "Wed 23 Sep, in class". */
+  dueText: string | null;
+}
+
+export interface AssessmentTopic {
+  text: string;
+  kind: 'keyword' | 'skill';
+}
+
+export interface AssessmentDetail extends AssessmentSummary {
+  weightingText: string | null;
+  weightingPercent: number | null;
+  aiUse: string | null;
+  parts: AssessmentPart[];
+  topics: AssessmentTopic[];
+  needsOwnFocus: boolean;
+  focusPrompt: string | null;
+  chosenFocus: string | null;
+  readMethod: ReadMethod | null;
+  sourceFile: { name: string | null; mime: string; size: number } | null;
+  errorCode: ReadErrorCode | null;
+}
+
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+/** Claude accepts images up to 5 MB, so photos are shrunk in the browser first. */
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;

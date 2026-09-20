@@ -41,6 +41,9 @@ export async function createCtx(overrides: Partial<Config> = {}): Promise<TestCt
     adminUsername: ADMIN.username,
     adminPassword: ADMIN.password,
     clientDir: null,
+    claudeModel: 'claude-opus-5',
+    claudeApiBase: null,
+    timezone: 'Australia/Sydney',
     ...overrides,
   };
   const db = openDatabase(dataDir);
@@ -54,6 +57,8 @@ export async function createCtx(overrides: Partial<Config> = {}): Promise<TestCt
     config,
     db,
     now: () => new Date(clock.time),
+    startJobs: false,
+    claudeRetries: 0,
     fetch: (async (url: string | URL | Request, init?: RequestInit) => {
       fetchCalls.push({ url: String(url), init: init ?? {} });
       return handler(String(url), init ?? {});
@@ -124,3 +129,61 @@ export async function createUserWithSession(ctx: TestCtx, admin: string, usernam
   if (r.status !== 204) throw new Error(`user password change failed: ${r.status}`);
   return cookie;
 }
+
+// ---- M2 helpers ----
+
+export function multipartBody(
+  fields: Record<string, string>,
+  file?: { field?: string; name: string; type: string; data: Buffer },
+) {
+  const boundary = `----wp${Math.random().toString(16).slice(2)}`;
+  const chunks: Buffer[] = [];
+  // Fields go first: the server reads them before the file arrives.
+  for (const [k, v] of Object.entries(fields)) {
+    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`));
+  }
+  if (file) {
+    chunks.push(
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${file.field ?? 'file'}"; filename="${file.name}"\r\nContent-Type: ${file.type}\r\n\r\n`),
+      file.data,
+      Buffer.from('\r\n'),
+    );
+  }
+  chunks.push(Buffer.from(`--${boundary}--\r\n`));
+  return { payload: Buffer.concat(chunks), contentType: `multipart/form-data; boundary=${boundary}` };
+}
+
+export async function upload(
+  ctx: TestCtx,
+  cookie: string | undefined,
+  file: { name: string; type: string; data: Buffer } | undefined,
+  opts: { fields?: Record<string, string>; origin?: string | null } = {},
+) {
+  const { payload, contentType } = multipartBody(opts.fields ?? {}, file);
+  const res = await ctx.app.inject({
+    method: 'POST',
+    url: '/api/assessments',
+    payload,
+    headers: {
+      host: HOST,
+      'content-type': contentType,
+      ...(cookie ? { cookie } : {}),
+      ...(opts.origin === null ? {} : { origin: opts.origin ?? `https://${HOST}` }),
+    },
+  });
+  let json: any;
+  try { json = res.body ? JSON.parse(res.body) : undefined; } catch { /* not JSON */ }
+  return { status: res.statusCode, json, res };
+}
+
+/** Save a Claude key (and optionally Canvas) for the signed-in user. */
+export async function connect(ctx: TestCtx, cookie: string, opts: { canvas?: boolean } = {}) {
+  await call(ctx, 'PUT', '/api/connections/claude', { cookie, body: { apiKey: 'sk-ant-test-key-for-waypoint' } });
+  if (opts.canvas) {
+    await call(ctx, 'PUT', '/api/connections/canvas', { cookie, body: { baseUrl: 'canvas.school.edu', token: '1234~canvas-token' } });
+  }
+}
+
+/** Requests the fake network saw for Claude's Messages endpoint. */
+export const claudeCalls = (ctx: TestCtx) => ctx.fetchCalls.filter((c) => c.url.includes('/v1/messages'));
+export const claudeBody = (call: { init: RequestInit }) => JSON.parse(String(call.init.body));

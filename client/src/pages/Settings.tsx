@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import type { CanvasConnectionInfo, ConnectionInfo, ConnectionKind, ConnectionsResponse, Theme } from '@waypoint/shared';
-import { CONNECTION_ERROR_TEXT, api, errorMessage } from '../api';
+import { CONNECTION_ERROR_TEXT, type CanvasConnectionInfo, type ConnectionInfo, type ConnectionKind, type ConnectionsResponse, type Theme } from '@waypoint/shared';
+import { api, errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { Alert, Check } from '../components/Icons';
 import { FormError, SecretField, TextField, formatDate, useToast } from '../components/ui';

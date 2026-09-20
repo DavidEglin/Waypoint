@@ -8,19 +8,26 @@
     "build": "tsup",
     "start": "node dist/main.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "try-parse": "tsx scripts/try-parse.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
     "@fastify/cookie": "^11.1.2",
+    "@fastify/multipart": "^10.1.1",
     "@fastify/static": "^10.1.4",
     "@node-rs/argon2": "^2.2.1",
     "@waypoint/shared": "^0.1.0",
     "better-sqlite3": "^13.0.3",
     "fastify": "^5.12.5",
+    "html-to-text": "^10.0.1",
+    "mammoth": "^1.12.3",
+    "unpdf": "^1.8.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "^26.6.2",
     "tsup": "^8.5.1",
     "tsx": "^4.23.13",

@@ -6,7 +6,6 @@ export type FetchLike = typeof fetch;
 export type TestResult = { ok: true } | { ok: false; error: ConnectionErrorCode };
 
 const TIMEOUT_MS = 10_000;
-export const CLAUDE_API_BASE = 'https://api.anthropic.com';
 
 /**
  * Turn what a student typed into a Canvas origin, or null if it isn't acceptable.
@@ -62,22 +61,6 @@ export async function testCanvas(fetchImpl: FetchLike, baseUrl: string, token: s
   try {
     const body = (await res.json()) as { id?: unknown };
     return body && typeof body === 'object' && body.id !== undefined ? { ok: true } : { ok: false, error: 'bad_response' };
-  } catch {
-    return { ok: false, error: 'bad_response' };
-  }
-}
-
-export async function testClaude(fetchImpl: FetchLike, apiKey: string, base = CLAUDE_API_BASE): Promise<TestResult> {
-  const res = await get(fetchImpl, `${base}/v1/models?limit=1`, {
-    'x-api-key': apiKey,
-    'anthropic-version': '2023-06-01',
-    Accept: 'application/json',
-  });
-  if (typeof res === 'string') return { ok: false, error: res };
-  if (res.status !== 200) return { ok: false, error: statusToError(res.status) };
-  try {
-    const body = (await res.json()) as { data?: unknown };
-    return Array.isArray(body?.data) ? { ok: true } : { ok: false, error: 'bad_response' };
   } catch {
     return { ok: false, error: 'bad_response' };
   }

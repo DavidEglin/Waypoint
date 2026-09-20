@@ -3,8 +3,8 @@ import type { CanvasConnectionInfo, ConnectionErrorCode, ConnectionInfo, Connect
 import { connectionKindSchema, saveCanvasRequestSchema, saveClaudeRequestSchema } from '@waypoint/shared';
 import { audit, clientIp, requireAuth, sendError } from '../auth.js';
 import type { AppDeps } from '../app.js';
-import { testCanvas, testClaude } from '../connection-tests.js';
-import { normalizeCanvasUrl } from '../connection-tests.js';
+import { testClaudeKey } from '../claude.js';
+import { normalizeCanvasUrl, testCanvas } from '../connection-tests.js';
 import { decrypt, encrypt } from '../crypto.js';
 import { parseBody } from '../http.js';
 
@@ -106,7 +106,7 @@ export function connectionRoutes(app: FastifyInstance, deps: AppDeps): void {
     const result =
       kind === 'canvas'
         ? await testCanvas(fetchImpl, current.base_url!, secret)
-        : await testClaude(fetchImpl, secret, deps.claudeApiBase);
+        : await testClaudeKey(secret, { fetch: fetchImpl, baseURL: config.claudeApiBase });
 
     db.prepare('UPDATE connections SET status = ?, last_verified = ?, last_error = ? WHERE user_id = ? AND kind = ?').run(
       result.ok ? 'ok' : 'failed',

@@ -1,4 +1,6 @@
 import type { FastifyInstance } from 'fastify';
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 import type { AdminUser } from '@waypoint/shared';
 import { createUserRequestSchema, resetPasswordRequestSchema, updateUserRequestSchema } from '@waypoint/shared';
 import { audit, clientIp, requireAdmin, revokeUserSessions, sendError, type UserRow } from '../auth.js';
@@ -92,8 +94,9 @@ export function adminRoutes(app: FastifyInstance, deps: AppDeps): void {
     if (target.id === actor.id) return sendError(reply, 400, 'cannot_delete_self', 'You cannot delete your own account.');
     if (isLastActiveAdmin(target)) return sendError(reply, 400, 'last_admin', 'There must be at least one active admin.');
 
-    // Sessions and connections cascade. Later milestones must add their tables to this cascade.
+    // Sessions, connections, courses and assessments cascade in the database; uploaded files are removed here.
     db.prepare('DELETE FROM users WHERE id = ?').run(target.id);
+    rmSync(join(config.dataDir, 'uploads', String(target.id)), { recursive: true, force: true });
     audit(db, { actor, action: 'user_deleted', target: target.username, ip: clientIp(request, config) });
     return reply.code(204).send();
   });

@@ -107,7 +107,7 @@ describe('connections', () => {
     const r = await call(ctx, 'POST', '/api/connections/claude/test', { cookie });
     expect(r.json.status).toBe('ok');
     expect(ctx.fetchCalls[0]!.url).toContain('https://api.anthropic.com/v1/models');
-    expect((ctx.fetchCalls[0]!.init.headers as Record<string, string>)['x-api-key']).toBe(KEY);
+    expect(new Headers(ctx.fetchCalls[0]!.init.headers).get('x-api-key')).toBe(KEY);
   });
 
   it.each([
