@@ -8,6 +8,7 @@ import { ReadError } from '../claude.js';
 import { loadSecret } from '../secrets.js';
 
 const MAX_COURSES = 30;
+const UPCOMING_WINDOW_DAYS = 28;
 
 interface CourseRow {
   id: number;
@@ -53,10 +54,17 @@ export function courseRoutes(app: FastifyInstance, deps: AppDeps): void {
       const items: CanvasFoundAssessment[] = [];
       let lastError: CanvasError | null = null;
       let failures = 0;
+      const nowMs = now().getTime();
+      const windowEndMs = nowMs + UPCOMING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
       // One course at a time: Canvas throttles parallel requests.
       for (const course of courses) {
         try {
-          for (const a of await canvas.listUpcomingAssignments(course.canvas_course_id)) {
+          for (const a of await canvas.listAssignments(course.canvas_course_id)) {
+            // Undated work always counts; dated work only within the window (not past-due).
+            if (a.due_at) {
+              const dueMs = new Date(a.due_at).getTime();
+              if (dueMs < nowMs || dueMs > windowEndMs) continue;
+            }
             items.push({
               courseId: course.id,
               courseName: course.name,

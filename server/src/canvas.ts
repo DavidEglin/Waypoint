@@ -105,8 +105,9 @@ export class CanvasClient {
     return this.list('/api/v1/courses?enrollment_state=active&enrollment_type=student&per_page=100');
   }
 
-  listUpcomingAssignments(courseId: string): Promise<CanvasAssignment[]> {
-    return this.list(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments?bucket=upcoming&order_by=due_at&per_page=100`);
+  /** All assignments, ordered by due date. No `bucket` filter: Canvas's own buckets are too narrow (e.g. "upcoming" is roughly the next week and excludes undated work), so callers decide the window. */
+  listAssignments(courseId: string): Promise<CanvasAssignment[]> {
+    return this.list(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments?order_by=due_at&per_page=100`);
   }
 
   getAssignment(courseId: string, assignmentId: string): Promise<CanvasAssignment> {

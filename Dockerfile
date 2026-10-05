@@ -27,7 +27,7 @@ RUN npm run build
 # ---- 2. Production dependencies only (no TypeScript, Vite, Vitest...) ----
 FROM node:${NODE_VERSION}-bookworm-slim AS deps
 WORKDIR /app
-M
+
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
 COPY server/package.json server/

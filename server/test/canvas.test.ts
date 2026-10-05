@@ -77,6 +77,27 @@ describe('finding assessments in Canvas', () => {
     expect(ctx.db.prepare('SELECT COUNT(*) AS n FROM courses').get()).toEqual({ n: 2 });
   });
 
+  it('includes undated work and widens the window to 4 weeks, excluding past-due and far-future work', async () => {
+    const ctx = await createCtx();
+    const cookie = await adminCookie(ctx);
+    await connect(ctx, cookie, { canvas: true });
+    ctx.setFetch((url) => {
+      if (url.startsWith(`${BASE}/api/v1/courses?`)) return jsonResponse([{ id: 201, name: 'Science 7', course_code: 'SCI7' }]);
+      if (url.startsWith(`${BASE}/api/v1/courses/201/assignments?`)) {
+        return jsonResponse([
+          { id: 7001, name: 'Past due', due_at: '2026-09-10T00:00:00Z' },
+          { id: 7002, name: 'No due date', due_at: null },
+          { id: 7003, name: 'Within 4 weeks', due_at: '2026-10-10T00:00:00Z' },
+          { id: 7004, name: 'Too far out', due_at: '2026-12-01T00:00:00Z' },
+        ]);
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const r = await call(ctx, 'GET', '/api/canvas/assessments', { cookie });
+    expect(r.status).toBe(200);
+    expect(r.json.items.map((i: any) => i.name)).toEqual(['Within 4 weeks', 'No due date']);
+  });
+
   it('marks assignments that were already added', async () => {
     const { ctx, cookie } = await setup();
     const found = (await call(ctx, 'GET', '/api/canvas/assessments', { cookie })).json;
