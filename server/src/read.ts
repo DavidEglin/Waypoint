@@ -163,8 +163,11 @@ export async function readNotification(deps: ReadDeps, assessmentId: number): Pr
     if (!db.prepare('SELECT 1 FROM assessments WHERE id = ? AND status = ?').get(a.id, 'reading')) return;
     save(deps, a, parsed, gathered);
   } catch (err) {
-    if (err instanceof ReadError) fail(db, a.id, err.code, deps.now());
-    else {
+    if (err instanceof ReadError) {
+      // err.message carries the detail passed when the error was thrown (e.g. the Canvas status/URL or Claude's message); falls back to the code itself when none was given.
+      deps.log?.(`assessment ${a.id} failed to read (${err.code}): ${err.message}`);
+      fail(db, a.id, err.code, deps.now());
+    } else {
       deps.log?.(`unexpected error reading assessment ${a.id}: ${err instanceof Error ? err.name : 'unknown'}`);
       fail(db, a.id, 'internal', deps.now());
     }

@@ -76,11 +76,12 @@ export class CanvasClient {
   private async getJson(url: string): Promise<{ body: unknown; next: string | null }> {
     // Manual redirects: an API answer must come from the address the student entered.
     const res = await this.send(url, { Authorization: `Bearer ${this.token}`, Accept: 'application/json' }, 'manual');
-    if (res.status !== 200) throw new CanvasError(codeForStatus(res.status));
+    // status 0 / type "opaqueredirect" here means Canvas tried to redirect us (e.g. to a login page) and we refused to follow.
+    if (res.status !== 200) throw new CanvasError(codeForStatus(res.status), `GET ${url} -> HTTP ${res.status || `(${res.type})`}`);
     try {
       return { body: await res.json(), next: nextLink(res.headers.get('link'), this.baseUrl) };
     } catch {
-      throw new CanvasError('bad_response');
+      throw new CanvasError('bad_response', `GET ${url} -> 200 but body was not valid JSON`);
     }
   }
 
@@ -94,7 +95,7 @@ export class CanvasClient {
     let url: string | null = `${this.baseUrl}${path}`;
     for (let page = 0; url && page < MAX_PAGES; page++) {
       const { body, next } = await this.getJson(url);
-      if (!Array.isArray(body)) throw new CanvasError('bad_response');
+      if (!Array.isArray(body)) throw new CanvasError('bad_response', `GET ${url} -> 200 but body was not a list (got ${typeof body})`);
       out.push(...(body as T[]));
       url = next;
     }

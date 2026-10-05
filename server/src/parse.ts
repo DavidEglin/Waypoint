@@ -141,7 +141,7 @@ export async function parseNotification(
     });
   } catch (err) {
     const code = mapClaudeError(err);
-    if (code) throw new ReadError(code);
+    if (code) throw new ReadError(code, err instanceof Error ? `Claude call failed: ${err.message}` : undefined);
     throw err;
   }
 
