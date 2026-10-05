@@ -37,3 +37,17 @@ Not yet built: M3 (Confirm), M4 (Sync + match), M5 (Folder), M6 (Export + notifi
 
 3. **Close the bell/notification gap (part of M6)**
    Now that Canvas discovery actually finds undated and 4-week-out work reliably, the missing piece is surfacing it without the student having to remember to open "Add an assessment." A lightweight periodic sync + unread count on a bell icon would match what was originally designed and tested well in the mockups — worth pulling forward ahead of the rest of M6 (export) since it's the one feature most likely to make or break whether this gets used day-to-day.
+
+---
+
+## Follow-up (2026-10-05, later): live debugging against real Canvas + Claude
+
+**Fixed:**
+- Undated Canvas assignments from **concluded courses** (e.g. a finished Semester 1) were showing up in "Add an assessment" forever, since the 4-week/undated window had no idea the course itself was stale. Added `courseConcluded()` (course or term `end_at` in the past) in `server/src/canvas.ts`; concluded courses are now skipped when searching for assignments, though still cached so the manual-upload course picker can still tag something to an old course.
+- Added detailed failure logging (`server/src/canvas.ts`, `parse.ts`, `read.ts`): a failed Canvas or Claude call now logs the real HTTP status/URL or the SDK's own error message to the server's warn log. Previously a `ReadError` failure logged nothing at all — the generic "Claude or Canvas answered unexpectedly" message was the only trace, with no way to tell which service failed or why.
+
+**Diagnosed, not a bug:** that generic "answered unexpectedly" error on a real assessment (Music Sem 2) turned out to be the Claude API key's credit balance running out (`invalid_request_error`: "credit balance is too low to access the Anthropic API"), caught immediately once the new logging was deployed. Resolved by topping up credits in the Anthropic console — no code defect. This affects any read (Canvas or upload) whenever the configured Claude key runs dry.
+
+**Known gap (new):** a Canvas assignment whose actual notification lives in a linked Page or the course syllabus, rather than in the assignment's own description field, still reads as "no readable text." Waypoint only reads the assignment description, its rubric, and files linked directly inside that description — fetching linked Pages/syllabus was scoped in the original integration plan (`Reference/canvas-integration-blueprint.md` §5) but never built. Workaround for now: upload the notification manually.
+
+**Parked (not critical):** map the Claude "low credit balance" 400 to a dedicated `ReadErrorCode` so the UI says "your Claude API key is out of credit" directly, instead of the generic bad-response message — would save a trip to the logs next time this happens.

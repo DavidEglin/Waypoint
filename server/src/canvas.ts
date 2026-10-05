@@ -13,6 +13,9 @@ export interface CanvasCourse {
   name: string;
   course_code?: string | null;
   enrollments?: { type: string }[];
+  /** Course-level end date, when the course sets its own instead of following the term. */
+  end_at?: string | null;
+  term?: { end_at?: string | null } | null;
 }
 export interface CanvasRubricRating {
   description?: string | null;
@@ -103,7 +106,7 @@ export class CanvasClient {
   }
 
   listCourses(): Promise<CanvasCourse[]> {
-    return this.list('/api/v1/courses?enrollment_state=active&enrollment_type=student&per_page=100');
+    return this.list('/api/v1/courses?enrollment_state=active&enrollment_type=student&include[]=term&per_page=100');
   }
 
   /** All assignments, ordered by due date. No `bucket` filter: Canvas's own buckets are too narrow (e.g. "upcoming" is roughly the next week and excludes undated work), so callers decide the window. */
@@ -134,6 +137,12 @@ export class CanvasClient {
     if (buf.length > maxBytes) throw new CanvasError('too_long');
     return buf;
   }
+}
+
+/** A concluded course's own end date (or its term's) has passed. An undated assignment in one is stale forever, not "upcoming". */
+export function courseConcluded(c: CanvasCourse, now: Date): boolean {
+  const end = c.end_at ?? c.term?.end_at ?? null;
+  return end !== null && new Date(end).getTime() < now.getTime();
 }
 
 function nextLink(header: string | null, baseUrl: string): string | null {

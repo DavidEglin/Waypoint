@@ -3,7 +3,7 @@ import type { CanvasFoundAssessment, CanvasFoundResponse, CourseInfo } from '@wa
 import { READ_ERROR_TEXT } from '@waypoint/shared';
 import type { AppDeps } from '../app.js';
 import { requireAuth, sendError } from '../auth.js';
-import { CanvasClient, CanvasError } from '../canvas.js';
+import { CanvasClient, CanvasError, courseConcluded } from '../canvas.js';
 import { ReadError } from '../claude.js';
 import { loadSecret } from '../secrets.js';
 
@@ -39,8 +39,12 @@ export function courseRoutes(app: FastifyInstance, deps: AppDeps): void {
         `INSERT INTO courses (user_id, canvas_course_id, code, name, synced_at) VALUES (?, ?, ?, ?, ?)
          ON CONFLICT (user_id, canvas_course_id) DO UPDATE SET code = excluded.code, name = excluded.name, synced_at = excluded.synced_at`,
       );
+      // Concluded courses (term or course end date passed) are still cached - the manual-upload picker can still
+      // tag an old course - but skipped below: an undated assignment in a finished course is stale forever, not "upcoming".
+      const concludedIds = new Set<string>();
       for (const c of (await canvas.listCourses()).slice(0, MAX_COURSES)) {
         upsert.run(userId, String(c.id), c.course_code ?? null, c.name ?? `Course ${c.id}`, synced);
+        if (courseConcluded(c, now())) concludedIds.add(String(c.id));
       }
       const courses = cached(userId).filter((c) => c.name);
 
@@ -58,6 +62,7 @@ export function courseRoutes(app: FastifyInstance, deps: AppDeps): void {
       const windowEndMs = nowMs + UPCOMING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
       // One course at a time: Canvas throttles parallel requests.
       for (const course of courses) {
+        if (concludedIds.has(course.canvas_course_id)) continue;
         try {
           for (const a of await canvas.listAssignments(course.canvas_course_id)) {
             // Undated work always counts; dated work only within the window (not past-due).

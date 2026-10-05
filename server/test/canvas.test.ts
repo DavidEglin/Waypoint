@@ -98,6 +98,32 @@ describe('finding assessments in Canvas', () => {
     expect(r.json.items.map((i: any) => i.name)).toEqual(['Within 4 weeks', 'No due date']);
   });
 
+  it('does not surface undated work from a concluded course, but still caches the course itself', async () => {
+    const ctx = await createCtx();
+    const cookie = await adminCookie(ctx);
+    await connect(ctx, cookie, { canvas: true });
+    ctx.setFetch((url) => {
+      if (url.startsWith(`${BASE}/api/v1/courses?`)) {
+        return jsonResponse([
+          // Semester 1, concluded by its term's end date: a leftover undated assignment should not show.
+          { id: 301, name: 'HISTORY SEM 1', course_code: 'HIST1', term: { end_at: '2026-06-30T00:00:00Z' } },
+          // Concluded via its own end_at instead of a term.
+          { id: 302, name: 'Old Elective', course_code: 'ELEC1', end_at: '2026-07-15T00:00:00Z' },
+          // Current course, no end date set.
+          { id: 303, name: 'MUSIC SEM 2', course_code: 'MUS2' },
+        ]);
+      }
+      if (url.startsWith(`${BASE}/api/v1/courses/301/assignments?`)) return jsonResponse([{ id: 8001, name: 'Stale essay', due_at: null }]);
+      if (url.startsWith(`${BASE}/api/v1/courses/302/assignments?`)) return jsonResponse([{ id: 8002, name: 'Stale project', due_at: null }]);
+      if (url.startsWith(`${BASE}/api/v1/courses/303/assignments?`)) return jsonResponse([{ id: 8003, name: 'Listening & Performance', due_at: null }]);
+      return new Response('not found', { status: 404 });
+    });
+    const r = await call(ctx, 'GET', '/api/canvas/assessments', { cookie });
+    expect(r.status).toBe(200);
+    expect(r.json.courses.map((c: any) => c.name)).toEqual(['HISTORY SEM 1', 'MUSIC SEM 2', 'Old Elective']);
+    expect(r.json.items.map((i: any) => i.name)).toEqual(['Listening & Performance']);
+  });
+
   it('marks assignments that were already added', async () => {
     const { ctx, cookie } = await setup();
     const found = (await call(ctx, 'GET', '/api/canvas/assessments', { cookie })).json;
