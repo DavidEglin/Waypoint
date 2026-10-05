@@ -7,10 +7,11 @@ import type {
   AssessmentSource,
   AssessmentSummary,
   AssessmentTopic,
+  FolderItem,
   ReadErrorCode,
   ReadMethod,
 } from '@waypoint/shared';
-import { MAX_IMAGE_BYTES, READ_ERROR_TEXT, fromCanvasRequestSchema } from '@waypoint/shared';
+import { MAX_IMAGE_BYTES, READ_ERROR_TEXT, confirmAssessmentRequestSchema, fromCanvasRequestSchema } from '@waypoint/shared';
 import type { AppDeps } from '../app.js';
 import { audit, clientIp, requireAuth, sendError } from '../auth.js';
 import { CanvasClient, CanvasError } from '../canvas.js';
@@ -83,6 +84,11 @@ export function assessmentRoutes(app: FastifyInstance, deps: AppDeps): void {
     const file = db.prepare('SELECT original_name, mime, size FROM source_files WHERE assessment_id = ?').get(id) as
       | { original_name: string | null; mime: string; size: number }
       | undefined;
+    const folderItems = (
+      db.prepare('SELECT kind, title, html_url, module_name, matched_terms, snippet FROM folder_items WHERE assessment_id = ? ORDER BY position').all(id) as {
+        kind: 'page' | 'file'; title: string; html_url: string | null; module_name: string | null; matched_terms: string; snippet: string | null;
+      }[]
+    ).map((f): FolderItem => ({ kind: f.kind, title: f.title, htmlUrl: f.html_url, moduleName: f.module_name, matchedTerms: JSON.parse(f.matched_terms), snippet: f.snippet }));
     return {
       ...summary(row),
       weightingText: row.weighting_text,
@@ -96,10 +102,12 @@ export function assessmentRoutes(app: FastifyInstance, deps: AppDeps): void {
       readMethod: row.read_method,
       sourceFile: file ? { name: file.original_name, mime: file.mime, size: file.size } : null,
       errorCode: row.error_code,
+      folderItems,
     };
   };
 
   const enqueueRead = (assessmentId: number) => app.jobs.enqueue('read_notification', { assessmentId });
+  const enqueueSearch = (assessmentId: number) => app.jobs.enqueue('search_course', { assessmentId });
 
   const guardStart = (userId: number, reply: FastifyReply, needCanvas: boolean): boolean => {
     if (!hasConnection(userId, 'claude')) {
@@ -233,16 +241,68 @@ export function assessmentRoutes(app: FastifyInstance, deps: AppDeps): void {
     return reply.code(202).send({ id });
   });
 
+  // ---- Confirm: correct and commit what Waypoint found ----
+
+  app.post('/api/assessments/:id/confirm', { preHandler: requireAuth }, async (request, reply) => {
+    const user = request.auth!.user;
+    const id = Number((request.params as { id: string }).id);
+    const row = db.prepare('SELECT status, read_method FROM assessments WHERE id = ? AND user_id = ?').get(id, user.id) as
+      | { status: string; read_method: ReadMethod | null }
+      | undefined;
+    if (!row) return sendError(reply, 404, 'not_found', 'No such assessment.');
+    // Confirming again (to correct something) is allowed from any resting point past the original read -
+    // including a search that failed (read_method is only ever set once that read succeeded) - but not
+    // mid-read, mid-search, or a read that never succeeded in the first place (nothing to confirm yet).
+    const confirmable = row.status === 'needs_check' || row.status === 'confirmed' || row.status === 'ready' || (row.status === 'failed' && row.read_method !== null);
+    if (!confirmable) return sendError(reply, 409, 'not_ready', 'This cannot be confirmed yet.');
+
+    const body = parseBody(confirmAssessmentRequestSchema, request.body, reply);
+    if (!body) return reply;
+
+    const nowIso = now().toISOString();
+    db.transaction(() => {
+      db.prepare(
+        `UPDATE assessments SET title = ?, course_label = ?, weighting_text = ?, weighting_percent = ?, ai_use = ?,
+           needs_own_focus = ?, focus_prompt = ?, chosen_focus = ?, status = 'searching', error_code = NULL, updated_at = ? WHERE id = ?`,
+      ).run(
+        body.title, body.courseLabel, body.weightingText, body.weightingPercent, body.aiUse,
+        body.needsOwnFocus ? 1 : 0, body.focusPrompt, body.chosenFocus, nowIso, id,
+      );
+      db.prepare('DELETE FROM assessment_parts WHERE assessment_id = ?').run(id);
+      db.prepare('DELETE FROM topics WHERE assessment_id = ?').run(id);
+      const insertPart = db.prepare(
+        'INSERT INTO assessment_parts (assessment_id, position, label, description, due_at, due_has_time, due_text) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      );
+      body.parts.forEach((p, i) => insertPart.run(id, i, p.label, p.description, p.dueAt, p.dueHasTime ? 1 : 0, p.dueText));
+      const insertTopic = db.prepare('INSERT INTO topics (assessment_id, position, text, kind) VALUES (?, ?, ?, ?)');
+      body.topics.forEach((t, i) => insertTopic.run(id, i, t.text, t.kind));
+    })();
+
+    enqueueSearch(id);
+    audit(db, { actor: user, action: 'assessment_confirmed', target: String(id), ip: clientIp(request, config) });
+    return detail(user.id, id);
+  });
+
   // ---- Retry, delete, original file ----
 
   app.post('/api/assessments/:id/retry', { preHandler: requireAuth }, async (request, reply) => {
     const user = request.auth!.user;
     const id = Number((request.params as { id: string }).id);
-    const row = db.prepare('SELECT status FROM assessments WHERE id = ? AND user_id = ?').get(id, user.id) as { status: string } | undefined;
+    const row = db.prepare('SELECT status, read_method FROM assessments WHERE id = ? AND user_id = ?').get(id, user.id) as
+      | { status: string; read_method: ReadMethod | null }
+      | undefined;
     if (!row) return sendError(reply, 404, 'not_found', 'No such assessment.');
     if (row.status !== 'failed') return sendError(reply, 409, 'not_failed', 'Only a failed read can be retried.');
-    if (!guardStart(user.id, reply, false)) return reply;
 
+    // read_method is only ever set once the original read succeeded, so its presence tells a search-stage
+    // failure (confirmed, then the course crawl failed) apart from a read-stage one (never got that far).
+    if (row.read_method !== null) {
+      db.prepare("UPDATE assessments SET status = 'searching', error_code = NULL, updated_at = ? WHERE id = ?").run(now().toISOString(), id);
+      enqueueSearch(id);
+      return detail(user.id, id);
+    }
+
+    if (!guardStart(user.id, reply, false)) return reply;
     db.prepare("UPDATE assessments SET status = 'reading', error_code = NULL, updated_at = ? WHERE id = ?").run(now().toISOString(), id);
     enqueueRead(id);
     return detail(user.id, id);

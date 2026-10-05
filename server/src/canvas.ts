@@ -51,6 +51,28 @@ export interface CanvasFile {
   url?: string;
   locked_for_user?: boolean;
 }
+export interface CanvasPage {
+  page_id?: number;
+  url: string;
+  title: string;
+  body?: string | null;
+  html_url?: string;
+  locked_for_user?: boolean;
+}
+export interface CanvasModuleItem {
+  id: number;
+  type: string;
+  title: string;
+  page_url?: string | null;
+  content_id?: number | null;
+  html_url?: string;
+}
+export interface CanvasModule {
+  id: number;
+  name: string;
+  position: number;
+  items?: CanvasModuleItem[];
+}
 
 function codeForStatus(status: number): ConnectionErrorCode {
   if (status === 401 || status === 403) return 'bad_credentials';
@@ -124,6 +146,21 @@ export class CanvasClient {
 
   getFile(fileId: string): Promise<CanvasFile> {
     return this.get(`/api/v1/files/${encodeURIComponent(fileId)}`);
+  }
+
+  /** Metadata only (no signed url) - call getFile() right before downloading, since the url expires. */
+  listFiles(courseId: string): Promise<CanvasFile[]> {
+    return this.list(`/api/v1/courses/${encodeURIComponent(courseId)}/files?per_page=100`);
+  }
+
+  /** Body included inline so a page's text never needs a second request. */
+  listPages(courseId: string): Promise<CanvasPage[]> {
+    return this.list(`/api/v1/courses/${encodeURIComponent(courseId)}/pages?include[]=body&per_page=100`);
+  }
+
+  /** Module items included inline. A module with more items than one page returns gives only that page's worth - a known simplification. */
+  listModules(courseId: string): Promise<CanvasModule[]> {
+    return this.list(`/api/v1/courses/${encodeURIComponent(courseId)}/modules?include[]=items&per_page=100`);
   }
 
   /** Downloads a file from the short-lived signed URL Canvas gave us, refusing anything over `maxBytes`. */

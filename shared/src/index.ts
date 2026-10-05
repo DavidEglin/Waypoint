@@ -162,6 +162,36 @@ export const fromCanvasRequestSchema = z.object({
 });
 export type FromCanvasRequest = z.infer<typeof fromCanvasRequestSchema>;
 
+// ---- Confirm: correcting and committing what Waypoint found ----
+
+export const confirmAssessmentPartSchema = z.object({
+  label: z.string().trim().min(1, 'Give this part a label.').max(80),
+  description: z.string().trim().max(600).nullable(),
+  dueAt: z.string().datetime().nullable(),
+  /** False when a date was given but no time of day. Meaningless when dueAt is null. */
+  dueHasTime: z.boolean(),
+  dueText: z.string().trim().max(200).nullable(),
+});
+
+export const confirmAssessmentTopicSchema = z.object({
+  text: z.string().trim().min(1).max(160),
+  kind: z.enum(['keyword', 'skill']),
+});
+
+export const confirmAssessmentRequestSchema = z.object({
+  title: z.string().trim().min(1, 'Give the assessment a title.').max(200),
+  courseLabel: z.string().trim().max(200).nullable(),
+  weightingText: z.string().trim().max(200).nullable(),
+  weightingPercent: z.number().min(0).max(100).nullable(),
+  aiUse: z.string().trim().max(1000).nullable(),
+  needsOwnFocus: z.boolean(),
+  focusPrompt: z.string().trim().max(400).nullable(),
+  chosenFocus: z.string().trim().max(200).nullable(),
+  parts: z.array(confirmAssessmentPartSchema).max(8),
+  topics: z.array(confirmAssessmentTopicSchema).max(40),
+});
+export type ConfirmAssessmentRequest = z.infer<typeof confirmAssessmentRequestSchema>;
+
 export type AssessmentStatus = 'reading' | 'needs_check' | 'confirmed' | 'searching' | 'ready' | 'failed';
 export type AssessmentSource = 'canvas' | 'photo' | 'document';
 export type ReadMethod = 'vision' | 'parsed' | 'canvas';
@@ -225,6 +255,17 @@ export interface AssessmentTopic {
   kind: 'keyword' | 'skill';
 }
 
+/** A matched Canvas page or file, found while searching the assessment's course (M4). */
+export interface FolderItem {
+  kind: 'page' | 'file';
+  title: string;
+  /** Opens the page/file in Canvas. */
+  htmlUrl: string | null;
+  moduleName: string | null;
+  matchedTerms: string[];
+  snippet: string | null;
+}
+
 export interface AssessmentDetail extends AssessmentSummary {
   weightingText: string | null;
   weightingPercent: number | null;
@@ -237,6 +278,7 @@ export interface AssessmentDetail extends AssessmentSummary {
   readMethod: ReadMethod | null;
   sourceFile: { name: string | null; mime: string; size: number } | null;
   errorCode: ReadErrorCode | null;
+  folderItems: FolderItem[];
 }
 
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;

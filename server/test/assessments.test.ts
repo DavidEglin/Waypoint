@@ -323,6 +323,93 @@ describe('ownership and deletion', () => {
   });
 });
 
+describe('confirming an assessment', () => {
+  const payload = (overrides: Record<string, unknown> = {}) => ({
+    title: 'Midterm Exam (corrected)',
+    courseLabel: 'Geography 8 (corrected)',
+    weightingText: '35% of course grade',
+    weightingPercent: 35,
+    aiUse: 'Allowed for brainstorming only.',
+    needsOwnFocus: true,
+    focusPrompt: 'Choose coffee or chocolate.',
+    chosenFocus: 'Coffee',
+    parts: [{ label: 'Part A', description: null, dueAt: '2026-10-01T13:00:00.000Z', dueHasTime: true, dueText: 'Thu 1 Oct, 11pm' }],
+    topics: [{ text: 'supply chains', kind: 'keyword' }],
+    ...overrides,
+  });
+
+  it('saves corrections, confirms (which starts the search), and the corrections persist', async () => {
+    const { ctx, cookie } = await setup();
+    const id = await add(ctx, cookie);
+    const r = await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie, body: payload() });
+    expect(r.status, r.res.body).toBe(200);
+    expect(r.json).toMatchObject({
+      status: 'searching',
+      title: 'Midterm Exam (corrected)',
+      courseName: 'Geography 8 (corrected)',
+      weightingText: '35% of course grade',
+      weightingPercent: 35,
+      aiUse: 'Allowed for brainstorming only.',
+      needsOwnFocus: true,
+      chosenFocus: 'Coffee',
+    });
+    expect(r.json.parts).toEqual([expect.objectContaining({ label: 'Part A', dueAt: '2026-10-01T13:00:00.000Z', dueText: 'Thu 1 Oct, 11pm' })]);
+    expect(r.json.topics).toEqual([{ text: 'supply chains', kind: 'keyword' }]);
+
+    // No course was linked to this upload, so the search has nothing to crawl and finishes straight away.
+    await ctx.app.jobs.drain();
+    const again = (await call(ctx, 'GET', `/api/assessments/${id}`, { cookie })).json;
+    expect(again).toMatchObject({ status: 'ready', title: 'Midterm Exam (corrected)', folderItems: [] });
+  });
+
+  it('can be confirmed again once ready, replacing the previous correction and re-searching', async () => {
+    const { ctx, cookie } = await setup();
+    const id = await add(ctx, cookie);
+    await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie, body: payload() });
+    await ctx.app.jobs.drain();
+    const second = await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie, body: payload({ title: 'Edited again' }) });
+    expect(second.status).toBe(200);
+    expect(second.json).toMatchObject({ status: 'searching', title: 'Edited again' });
+  });
+
+  it('rejects an empty title', async () => {
+    const { ctx, cookie } = await setup();
+    const id = await add(ctx, cookie);
+    const r = await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie, body: payload({ title: '  ' }) });
+    expect(r.status).toBe(400);
+  });
+
+  it('cannot be confirmed while still reading, or after a failed read', async () => {
+    const { ctx, cookie } = await setup();
+    const r = await upload(ctx, cookie, docx());
+    const reading = await call(ctx, 'POST', `/api/assessments/${r.json.id}/confirm`, { cookie, body: payload() });
+    expect(reading.status).toBe(409);
+    expect(reading.json.error).toBe('not_ready');
+
+    ctx.setFetch(() => claudeError(401, 'authentication_error'));
+    const failedId = await add(ctx, cookie);
+    const failed = await call(ctx, 'POST', `/api/assessments/${failedId}/confirm`, { cookie, body: payload() });
+    expect(failed.status).toBe(409);
+  });
+
+  it('cannot confirm another student\'s assessment', async () => {
+    const { ctx, cookie: admin } = await setup();
+    const id = await add(ctx, admin);
+    const sam = await createUserWithSession(ctx, admin, 'sam');
+    await connect(ctx, sam);
+    expect((await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie: sam, body: payload() })).status).toBe(404);
+  });
+
+  it('allows removing all parts and topics (undated work, nothing else found)', async () => {
+    const { ctx, cookie } = await setup();
+    const id = await add(ctx, cookie);
+    const r = await call(ctx, 'POST', `/api/assessments/${id}/confirm`, { cookie, body: payload({ parts: [], topics: [] }) });
+    expect(r.status).toBe(200);
+    expect(r.json.parts).toEqual([]);
+    expect(r.json.topics).toEqual([]);
+  });
+});
+
 describe('prompt injection in a notification', () => {
   it('is treated as content to read, and cannot change what is stored beyond the structured fields', async () => {
     const { ctx, cookie } = await setup({ ...geographyParsed, title: 'Real title' });

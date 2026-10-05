@@ -138,4 +138,26 @@ export const migrations: Migration[] = [
       CREATE INDEX jobs_queue ON jobs(status, id);
     `,
   },
+  {
+    id: 3,
+    name: 'folder-items',
+    sql: `
+      -- One row per matched Canvas page/file for a confirmed assessment (M4: search + match).
+      -- Replaced wholesale on every search run, so this is a result cache, not a content archive.
+      CREATE TABLE folder_items (
+        id INTEGER PRIMARY KEY,
+        assessment_id INTEGER NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
+        position INTEGER NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('page', 'file')),
+        canvas_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        html_url TEXT,
+        module_name TEXT,
+        score INTEGER NOT NULL,
+        matched_terms TEXT NOT NULL,
+        snippet TEXT
+      );
+      CREATE INDEX folder_items_assessment ON folder_items(assessment_id);
+    `,
+  },
 ];

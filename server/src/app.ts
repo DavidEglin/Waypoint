@@ -10,6 +10,7 @@ import type { Config } from './config.js';
 import type { Db } from './db.js';
 import { JobRunner } from './jobs.js';
 import { readNotification } from './read.js';
+import { searchCourse } from './search.js';
 import { adminRoutes } from './routes/admin.js';
 import { assessmentRoutes } from './routes/assessments.js';
 import { courseRoutes } from './routes/courses.js';
@@ -55,6 +56,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   const jobs = new JobRunner(db, {
     read_notification: (p: { assessmentId: number }) =>
       readNotification({ db, config, fetch: deps.fetch, now, claudeRetries: deps.claudeRetries, log: (m) => app.log.warn(m) }, p.assessmentId),
+    search_course: (p: { assessmentId: number }) => searchCourse({ db, config, fetch: deps.fetch, now, log: (m) => app.log.warn(m) }, p.assessmentId),
   });
   app.decorate('jobs', jobs);
   if (deps.startJobs !== false) jobs.start();
