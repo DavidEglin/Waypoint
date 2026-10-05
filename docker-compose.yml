@@ -1,8 +1,7 @@
 # Waypoint. Run with:  docker compose up -d --build
 #
 # Before the first start:
-#   1. Create ./data owned by the container's user:   mkdir -p data && sudo chown 1000:1000 data
-#   2. Create a .env file next to this one (compose reads it automatically):
+#   1. Create a .env file next to this one (compose reads it automatically):
 #        ENCRYPTION_KEY=<output of: openssl rand -base64 32>
 #        ADMIN_USERNAME=<your username>
 #        ADMIN_PASSWORD=<a temporary password, 12+ characters>
@@ -11,9 +10,16 @@
 #      and you are made to change that password at first sign-in.
 #      Optional in .env: BIND_ADDRESS (which server address to listen on, default all of them),
 #      TRUST_CLOUDFLARE_HEADERS, CLAUDE_MODEL, TIMEZONE.
-#   3. Point your Cloudflare Tunnel's public hostname at http://<server-ip>:3000
+#   2. Point your Cloudflare Tunnel's public hostname at http://<server-ip>:3000
 #
-# Backups are your provider's snapshots: everything worth keeping is in ./data.
+# Data lives in the Docker volume "waypoint-data" (created automatically on first start; it takes its
+# ownership from the image, so no host folder or chown is needed). Everything worth keeping is in it.
+#   Where it is on disk:  docker volume inspect waypoint-data
+#   Back it up:           docker run --rm -v waypoint-data:/data:ro -v "$PWD":/backup busybox \
+#                           tar czf /backup/waypoint-data.tgz -C /data .
+#   Restore (stopped):    docker run --rm -v waypoint-data:/data -v "$PWD":/backup busybox \
+#                           sh -c 'tar xzf /backup/waypoint-data.tgz -C /data && chown -R 1000:1000 /data'
+# "docker compose down" keeps the volume; only "down -v" or "docker volume rm" deletes it.
 
 services:
   waypoint:
@@ -53,7 +59,7 @@ services:
       - "${BIND_ADDRESS:-0.0.0.0}:3000:3000"
 
     volumes:
-      - ./data:/data
+      - waypoint-data:/data
 
     # The app only writes to /data. A read-only root filesystem and dropped privileges limit the damage
     # if anything in it were ever compromised.
@@ -70,3 +76,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  waypoint-data:
+    # A fixed name, so it is "waypoint-data" rather than "<folder>_waypoint-data".
+    name: waypoint-data
