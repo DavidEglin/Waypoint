@@ -35,4 +35,4 @@ npm run build
 Model and time zone are set with `CLAUDE_MODEL` (default `claude-opus-5`) and `TIMEZONE` (default `Australia/Sydney`).
 
 `CLIENT_DIR=client/dist npm start` serves the API and the built client on `PORT`. See `.env.example` for every setting.
-The app only answers to the exact `ALLOWED_HOST` and serves plain HTTP; HTTPS and the tunnel are yours to configure. There is no Docker or deploy script in this repo.
+The app only answers to the exact `ALLOWED_HOST` and serves plain HTTP; HTTPS and the tunnel are yours to configure. There is no Docker or deploy script in this repo.ß
